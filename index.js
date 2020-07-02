@@ -37,7 +37,7 @@ process.stdin.on('keypress', function (ch, key) {
 process.stdin.setRawMode(true);
 process.stdin.resume();
 
-const limitDefault = 15;
+const limitDefault = 20;
 const limitArg = Number(process.argv[2] || limitDefault);
 const limit = !isNaN(limitArg) ? limitArg : limitDefault;
 
@@ -92,8 +92,8 @@ function renderNews() {
 
     console.clear();
     console.log(feeds.map(({ title }, idx) => {
-        const prefix = idx === currentTab ? '* ' : '  ';
-        return `${prefix}${title.slice(0, 12).split('-')[0].trim()}`;
+        const w = idx === currentTab ? ' * ' : '   ';
+        return `${w}${title.slice(0, 12).split('-')[0].trim()}${w}`;
     }).join(' | '));
     console.log();
 
