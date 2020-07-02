@@ -10,7 +10,8 @@ const limitDefault = 10;
 const limitArg = Number(process.argv[2] || 10);
 const limit = !isNaN(limitArg) ? limitArg : limitDefault;
 
-const interval = 1000 * 60 * 20;
+const updateIntervalInMinutes = 5;
+const interval = 1000 * 60 * updateIntervalInMinutes;
 let timer = null;
 
 process.on('uncaughtException', function onUncaughException(err) {
