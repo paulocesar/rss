@@ -6,7 +6,11 @@ const urls = [
     'https://g1.globo.com/rss/g1/'
 ];
 
-const interval = 1000 * 60 * 5;
+const limitDefault = 10;
+const limitArg = Number(process.argv[2] || 10);
+const limit = !isNaN(limitArg) ? limitArg : limitDefault;
+
+const interval = 1000 * 60 * 20;
 let timer = null;
 
 process.on('uncaughtException', function onUncaughException(err) {
@@ -29,7 +33,7 @@ async function main() {
             console.log(title.toUpperCase());
             const prefix = '  ';
 
-            for (const n of news.slice(0, 10)) {
+            for (const n of news.slice(0, limit)) {
                 const date = moment(n.pubDate).format('HH:mm YYYY/MM/DD');
                 console.log(`${prefix}${date} - ${n.title}`);
                 console.log(`${prefix}${n.link}`);
