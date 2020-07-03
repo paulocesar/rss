@@ -41,7 +41,7 @@ const limitDefault = 20;
 const limitArg = Number(process.argv[2] || limitDefault);
 const limit = !isNaN(limitArg) ? limitArg : limitDefault;
 
-const updateIntervalInMinutes = 5;
+const updateIntervalInMinutes = 10;
 const interval = 1000 * 60 * updateIntervalInMinutes;
 let timer = null;
 
