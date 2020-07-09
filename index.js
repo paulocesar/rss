@@ -2,6 +2,7 @@ const xml2json = require('xml2json');
 const axios =  require('axios');
 const moment = require('moment');
 const keypress = require('keypress');
+const express = require('express');
 
 const urls = [
     'https://g1.globo.com/rss/g1/',
@@ -21,26 +22,30 @@ process.on('uncaughtException', function onUncaughException(err) {
     process.exit(1);
 });
 
-keypress(process.stdin);
-
-process.stdin.on('keypress', function (ch, key) {
-    // console.log('got "keypress"', key);
-    if (!key) { return; }
-
-    if ([ 'q', 'escape' ].includes(key.name)) { process.exit(0); }
-
-    if ([ 'h', 'left' ].includes(key.name)) { return moveFeed(-1); }
-    if ([ 'j', 'down' ].includes(key.name)) { return scrollNews(1); }
-    if ([ 'k', 'up' ].includes(key.name)) { return scrollNews(-1); }
-    if ([ 'l', 'right' ].includes(key.name)) { return moveFeed(1); }
-});
-
-process.stdin.setRawMode(true);
-process.stdin.resume();
-
 const limitDefault = 20;
 const limitArg = Number(process.argv[2] || limitDefault);
 const limit = !isNaN(limitArg) ? limitArg : limitDefault;
+
+const isWebServer = process.argv.includes('web');
+
+if (!isWebServer) {
+    keypress(process.stdin);
+
+    process.stdin.on('keypress', function (ch, key) {
+        // console.log('got "keypress"', key);
+        if (!key) { return; }
+
+        if ([ 'q', 'escape' ].includes(key.name)) { process.exit(0); }
+
+        if ([ 'h', 'left' ].includes(key.name)) { return moveFeed(-1); }
+        if ([ 'j', 'down' ].includes(key.name)) { return scrollNews(1); }
+        if ([ 'k', 'up' ].includes(key.name)) { return scrollNews(-1); }
+        if ([ 'l', 'right' ].includes(key.name)) { return moveFeed(1); }
+    });
+
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+}
 
 const updateIntervalInMinutes = 10;
 const interval = 1000 * 60 * updateIntervalInMinutes;
@@ -59,14 +64,16 @@ async function readFeed(feed) {
         const content = json.rss.channel;
 
         feed.title = content.title;
-        feed.news = [].concat(content.item);
+        feed.news = [].concat(content.item).map((i) => {
+            i.origin = feed.title;
+            return i;
+        });
         feed.news.sort(sortByDate);
         populateNews();
     }
 }
 
 async function refreshNews() {
-
     try {
         for (const r of feeds.map((f) => readFeed(f))) {
             await r;
@@ -88,6 +95,8 @@ function populateNews() {
 }
 
 function renderNews() {
+    if (isWebServer) { return false; }
+
     const { title, news } = feeds[currentTab];
     const page = news.slice(currentIndex, currentIndex + limit);
 
@@ -105,6 +114,8 @@ function renderNews() {
         console.log(` ${no} ${date} - ${n.title}`);
         console.log(`     \x1b[2m${n.link}\x1b[0m`);
     }
+
+    return true;
 }
 
 function moveFeed(direction) {
@@ -136,3 +147,29 @@ async function main() {
 }
 
 main();
+
+if (!isWebServer) { return; }
+
+const app = express();
+const port = 80;
+
+app.get('/', (req, res) => {
+    res.status(200).send(`
+<!DOCTYPE html>
+<html>
+    <head><title>News</title></head>
+    <body>
+        <div id="app"><p>Loading...</p></div>
+        <script type="text/javascript" src="/app.js"></script>
+    </body>
+</html>
+    `.trim());
+});
+
+app.get('/feeds', (req, res) => {
+    res.json({ feeds });
+});
+
+app.use(express.static('public'));
+
+app.listen(port, console.log('web server is running'));
