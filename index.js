@@ -85,6 +85,8 @@ async function refreshNews() {
     }
 
     populateNews();
+
+    if (!isWebServer) { return; }
     timer = setTimeout(refreshNews, interval);
 }
 
@@ -168,8 +170,25 @@ app.get('/', (req, res) => {
     `.trim());
 });
 
-app.get('/feeds', (req, res) => {
-    res.json({ feeds });
+let lastUpdate = null;
+
+app.get('/feeds', async (req, res) => {
+    try {
+        const now = moment();
+
+        const mustUpdate = !lastUpdate ||
+            moment.duration(now.diff(lastUpdate)).asMinutes() >
+                updateIntervalInMinutes;
+
+        if (mustUpdate) {
+            console.log('updating...');
+            await refreshNews();
+            lastUpdate = now;
+        }
+        res.json({ feeds });
+    } catch(ex) {
+        res.status(500).json({ ok: false });
+    }
 });
 
 app.use(express.static('public'));
