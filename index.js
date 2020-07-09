@@ -24,14 +24,15 @@ process.on('uncaughtException', function onUncaughException(err) {
 keypress(process.stdin);
 
 process.stdin.on('keypress', function (ch, key) {
-    if (key && [ 'escape', 'q' ].includes(key.name)) { process.exit(0); }
-
-    if (key && key.name == 'h') { return moveFeed(-1); }
-    if (key && key.name == 'j') { return scrollNews(1); }
-    if (key && key.name == 'k') { return scrollNews(-1); }
-    if (key && key.name == 'l') { return moveFeed(1); }
-
     // console.log('got "keypress"', key);
+    if (!key) { return; }
+
+    if ([ 'q', 'escape' ].includes(key.name)) { process.exit(0); }
+
+    if ([ 'h', 'left' ].includes(key.name)) { return moveFeed(-1); }
+    if ([ 'j', 'down' ].includes(key.name)) { return scrollNews(1); }
+    if ([ 'k', 'up' ].includes(key.name)) { return scrollNews(-1); }
+    if ([ 'l', 'right' ].includes(key.name)) { return moveFeed(1); }
 });
 
 process.stdin.setRawMode(true);
