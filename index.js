@@ -3,12 +3,12 @@ const axios =  require('axios');
 const moment = require('moment');
 const keypress = require('keypress');
 const express = require('express');
+const crypto = require('crypto');
 
 const urls = [
     'https://g1.globo.com/rss/g1/',
     'http://feeds.bbci.co.uk/portuguese/rss.xml',
-    'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
-    'https://rss.nytimes.com/services/xml/rss/nyt/World.xml'
+    'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml'
 ];
 
 const feeds = urls.map((url) => ({ title: 'loading...', url, news: [ ] }));
@@ -65,6 +65,8 @@ async function readFeed(feed) {
 
         feed.title = content.title;
         feed.news = [].concat(content.item).map((i) => {
+            i.id = crypto.createHash('md5').update(`${i.pubDate}${i.title}`)
+                .digest('hex');
             i.origin = feed.title;
             return i;
         });
